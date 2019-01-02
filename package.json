@@ -3,6 +3,7 @@
 	"displayName": "openHAB Formatter",
 	"description": "Format an openHAB item declaration",
 	"version": "0.0.1",
+	"publisher": "MarkHilbush",
 	"engines": {
 		"vscode": "^1.30.0"
 	},
