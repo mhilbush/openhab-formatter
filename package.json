@@ -4,6 +4,7 @@
 	"description": "Format openHAB assets",
 	"version": "0.0.1",
 	"publisher": "MarkHilbush",
+    "icon": "openhab.png",
 	"engines": {
 		"vscode": "^1.30.0"
 	},
