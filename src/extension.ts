@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 // Default indent amount for item parts
-const INDENT_AMOUNT = 26;
+const INDENT_AMOUNT = 28;
 
 // Regex patterns to match parts of item definition
 const REGEX_ITEM_TYPE = /(Color|Contact|DateTime|Dimmer|Group|Image|Location|Number|Player|Rollershutter|String|Switch):*(\w)*:*[\w\(\),]*/;
