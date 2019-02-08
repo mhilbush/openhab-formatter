@@ -1,16 +1,11 @@
 import * as vscode from 'vscode';
 
-// Default indent amount for item parts
-const INDENT_AMOUNT = 28;
-
 // Regex patterns to match parts of item definition
 const REGEX_ITEM_TYPE = /(Color|Contact|DateTime|Dimmer|Group|Image|Location|Number|Player|Rollershutter|String|Switch):*(\w)*:*[\w\(\),]*/;
 const REGEX_ITEM_NAME = /[a-zA-Z0-9][a-zA-Z0-9_]*/;
 const REGEX_ITEM_LABEL = /\".+?\"/;
 const REGEX_ITEM_ICON = /<.+?>/;
 const REGEX_ITEM_GROUP = /\(.+?\)/;
-//const REGEX_ITEM_TAG = /\[.+?\]/;
-//const REGEX_ITEM_TAG = /\[(\".+?\")]/;
 const REGEX_ITEM_TAG = /\[\s*(\".+?\")\s*(,\s*\".+?\"\s*)*]/;
 const REGEX_ITEM_CHANNEL = /\{.+?\}/;
 
@@ -105,7 +100,7 @@ function insertItem(type: string, name: string, label: string, icon: string,
 	editor.selection = new vscode.Selection(newPos, newPos);
 	let range = new vscode.Range(newPos,newPos.with(newPos.line, 0));
 
-	insertFormattedItem(editor, range, type, name, label, icon, group, tag, channel);
+	insertFormattedItem(editor, range, type, name, label, icon, group, tag, channel, 0);
 
 	editor.selection = new vscode.Selection(newPos, newPos);
 }
@@ -142,10 +137,22 @@ function commandFormatItem(): void {
 	let itemTag = '';
 	let itemChannel = '';
 
-	// Position at start of line, then get a range that includes the entire line
+	let config = vscode.workspace.getConfiguration('openhab-formatter');
+	let preserveWhitespace = config.preserveWhitespace;
+
+	// Position at start of line and get a range for the entire line
 	newPos = currentPos.with(currentPos.line, 0);
 	ed.selection = new vscode.Selection(newPos, newPos);
-	let range = new vscode.Range(newPos,newPos.with(newPos.line, lineText.text.length));
+	let range = new vscode.Range(newPos, newPos.with(newPos.line, lineText.text.length));
+
+	// Move to after the whitespace
+	let leadingWhitespaceCount = lineText.firstNonWhitespaceCharacterIndex;
+	newPos = newPos.with(newPos.line, leadingWhitespaceCount);
+
+	if (preserveWhitespace === false) {
+		// Set to 0 if not preserving leading whitespace
+		leadingWhitespaceCount = 0;
+	}
 
 	// Discover item Type
 	var wordRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_TYPE);
@@ -169,7 +176,7 @@ function commandFormatItem(): void {
 	let itemLabelRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_LABEL);
 	if (itemLabelRange && itemLabelRange.isSingleLine) {
 		itemLabel = doc.getText(itemLabelRange);
-		console.log("Label: " + itemLabel);
+		//console.log("Label: " + itemLabel);
 		newPos = newPos.with(newPos.line, newPos.character + itemLabel.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
@@ -191,7 +198,7 @@ function commandFormatItem(): void {
 	let itemTagRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_TAG);
 	if (itemTagRange && itemTagRange.isSingleLine) {
 		itemTag = doc.getText(itemTagRange);
-		console.log("Tag: " + itemTag);
+		//console.log("Tag: " + itemTag);
 		newPos = newPos.with(newPos.line, newPos.character + itemTag.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
@@ -203,28 +210,31 @@ function commandFormatItem(): void {
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
 	// Replace the exiting item with a reformatted one
-	insertFormattedItem(ed, range, itemType, itemName, itemLabel, itemIcon, itemGroup, itemTag, itemChannel);
+	insertFormattedItem(ed, range, itemType, itemName, itemLabel, itemIcon, itemGroup, itemTag, itemChannel, leadingWhitespaceCount);
 }
 
 function insertFormattedItem(ed: vscode.TextEditor, range: vscode.Range, type: string, name: string, label: string,
-	icon: string, group: string, tag: string, channel: string): void {
+	icon: string, group: string, tag: string, channel: string, additionalIndent : number): void {
+
+	let config = vscode.workspace.getConfiguration('openhab-formatter');
+	let indentAmount = config.indentAmount;
 
 	// Create text for new line
-	let reformattedItem = type + indent(INDENT_AMOUNT - type.length) + name + "\n";
+	let reformattedItem = indent(additionalIndent) + type + indent(indentAmount - type.length) + name + "\n";
 	if(label.length !== 0) {
-		reformattedItem = reformattedItem + indent(INDENT_AMOUNT) + label + "\n";
+		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + label + "\n";
 	}
 	if(icon.length !== 0) {
-		reformattedItem = reformattedItem + indent(INDENT_AMOUNT) + icon + "\n";
+		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + icon + "\n";
 	}
 	if(group.length !== 0) {
-		reformattedItem = reformattedItem + indent(INDENT_AMOUNT) + group + "\n";
+		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + group + "\n";
 	}
 	if(tag.length !== 0) {
-		reformattedItem = reformattedItem + indent(INDENT_AMOUNT) + tag + "\n";
+		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + tag + "\n";
 	}
 	if(channel.length !== 0) {
-		reformattedItem = reformattedItem + indent(INDENT_AMOUNT) + channel + "\n";
+		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + channel + "\n";
 	}
 
 	let selection = range;

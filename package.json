@@ -2,7 +2,7 @@
 	"name": "openhab-formatter",
 	"displayName": "openHAB Formatter",
 	"description": "Format openHAB assets",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"publisher": "MarkHilbush",
     "icon": "openhab.png",
 	"engines": {
@@ -23,7 +23,7 @@
 	"main": "./out/extension.js",
 	"repository": {
 		"type": "git",
-		"url": "file:///Users/mark/format-item/.git"
+		"url": "file:///Users/mark/openhab-formatter/.git"
 	},
 	"contributes": {
 		"commands": [
@@ -56,7 +56,26 @@
 				"title": "openHAB Format Item"
 			}
 		],
-        "keybindings": [
+        "configuration": {
+            "type": "object",
+            "title": "openHAB Formatter Configuration",
+            "properties": {
+                "openhab-formatter.preserveWhitespace": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Preserves any leading whitespace when reformatting an item."
+                },
+                "openhab-formatter.indentAmount": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": 28,
+                    "description": "Indent level when reformatting items."
+                }
+            }
+        },
+		"keybindings": [
             {
                 "mac": "cmd+i cmd+i",
                 "win": "ctrl+i ctrl+i",
