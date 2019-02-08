@@ -48,7 +48,7 @@ None
 
 ## Known Issues
 
-None
+The **ReformatItem** command only reformats one line at a time. I haven't gotten around to making it work on a selection and/or the entire file.
 
 ## Release Notes
 
