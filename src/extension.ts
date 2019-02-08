@@ -9,7 +9,9 @@ const REGEX_ITEM_NAME = /[a-zA-Z0-9][a-zA-Z0-9_]*/;
 const REGEX_ITEM_LABEL = /\".+?\"/;
 const REGEX_ITEM_ICON = /<.+?>/;
 const REGEX_ITEM_GROUP = /\(.+?\)/;
-const REGEX_ITEM_TAG = /\[.+?\]/;
+//const REGEX_ITEM_TAG = /\[.+?\]/;
+//const REGEX_ITEM_TAG = /\[(\".+?\")]/;
+const REGEX_ITEM_TAG = /\[\s*(\".+?\")\s*(,\s*\".+?\"\s*)*]/;
 const REGEX_ITEM_CHANNEL = /\{.+?\}/;
 
 // Default item values
@@ -167,6 +169,7 @@ function commandFormatItem(): void {
 	let itemLabelRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_LABEL);
 	if (itemLabelRange && itemLabelRange.isSingleLine) {
 		itemLabel = doc.getText(itemLabelRange);
+		console.log("Label: " + itemLabel);
 		newPos = newPos.with(newPos.line, newPos.character + itemLabel.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
@@ -188,6 +191,7 @@ function commandFormatItem(): void {
 	let itemTagRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_TAG);
 	if (itemTagRange && itemTagRange.isSingleLine) {
 		itemTag = doc.getText(itemTagRange);
+		console.log("Tag: " + itemTag);
 		newPos = newPos.with(newPos.line, newPos.character + itemTag.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
