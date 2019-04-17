@@ -77,7 +77,7 @@ function commandInsertNewStringItem(): void {
 
 // Add new Number item
 function commandInsertNewNumberItem(): void {
-	insertItem('Number', DEF_ITEM_NAME, '"Label [%.0f]"', '<none', DEF_ITEM_GROUP, DEF_ITEM_TAG, DEF_ITEM_CHANNEL);
+	insertItem('Number', DEF_ITEM_NAME, '"Label [%.0f]"', '<none>', DEF_ITEM_GROUP, DEF_ITEM_TAG, DEF_ITEM_CHANNEL);
 }
 
 // Add new DateTime item
