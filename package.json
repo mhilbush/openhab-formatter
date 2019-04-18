@@ -2,7 +2,7 @@
 	"name": "openhab-formatter",
 	"displayName": "openHAB Formatter",
 	"description": "Format openHAB assets",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"publisher": "MarkHilbush",
     "icon": "openhab.png",
 	"engines": {
@@ -18,7 +18,8 @@
 		"onCommand:extension.insert-item-string",
 		"onCommand:extension.insert-item-number",
 		"onCommand:extension.insert-item-datetime",
-		"onCommand:extension.format-item"
+		"onCommand:extension.reformat-item",
+		"onCommand:extension.reformat-file"
 	],
 	"main": "./out/extension.js",
 	"repository": {
@@ -52,8 +53,12 @@
 				"title": "openHAB Insert DateTime Item"
 			},
 			{
-				"command": "extension.format-item",
-				"title": "openHAB Format Item"
+				"command": "extension.reformat-item",
+				"title": "openHAB Reformat Item"
+			},
+			{
+				"command": "extension.reformat-file",
+				"title": "openHAB Reformat File"
 			}
 		],
         "configuration": {
@@ -123,7 +128,14 @@
                 "win": "ctrl+i ctrl+f",
                 "linux": "ctrl+i ctrl+f",
                 "key": "ctrl+i ctrl+f",
-                "command": "extension.format-item"
+                "command": "extension.reformat-item"
+            },
+            {
+                "mac": "cmd+i cmd+l",
+                "win": "ctrl+i ctrl+l",
+                "linux": "ctrl+i ctrl+l",
+                "key": "ctrl+i ctrl+l",
+                "command": "extension.reformat-file"
             }
 		],
 		"menus": {
@@ -153,7 +165,11 @@
 					"group": "navigation"
 				},
 				{
-					"command": "extension.format-item",
+					"command": "extension.reformat-item",
+					"group": "navigation"
+				},
+				{
+					"command": "extension.reformat-file",
 					"group": "navigation"
 				}
 			]

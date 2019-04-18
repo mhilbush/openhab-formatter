@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 
+const REGEX_COMMENT = /^\s*\/\/.*$/;
+
 // Regex patterns to match parts of item definition
 const REGEX_ITEM_TYPE = /(Color|Contact|DateTime|Dimmer|Group|Image|Location|Number|Player|Rollershutter|String|Switch):*(\w)*:*[\w\(\),]*/;
 const REGEX_ITEM_NAME = /[a-zA-Z0-9][a-zA-Z0-9_]*/;
@@ -49,9 +51,14 @@ export function activate(context: vscode.ExtensionContext) {
 		commandInsertNewDateTimeItem();
 	});
 
-	// Format an existing item
-	vscode.commands.registerCommand('extension.format-item', () => {
-		commandFormatItem();
+	// Reformat an existing item
+	vscode.commands.registerCommand('extension.reformat-item', () => {
+		commandReformatItem();
+	});
+
+	// Reformat all items in the file
+	vscode.commands.registerCommand('extension.reformat-file', () => {
+		commandReformatFile();
 	});
 }
 
@@ -82,14 +89,11 @@ function commandInsertNewNumberItem(): void {
 
 // Add new DateTime item
 function commandInsertNewDateTimeItem(): void {
-	insertItem('DateTime', DEF_ITEM_NAME, '"Label [%1$tA, %1$tm/%1$td/%1$tY %1$tl:%1$tM %1$tp]"', '<time>',
-		DEF_ITEM_GROUP, DEF_ITEM_TAG, DEF_ITEM_CHANNEL);
+	insertItem('DateTime', DEF_ITEM_NAME, '"Label [%1$tA, %1$tm/%1$td/%1$tY %1$tl:%1$tM %1$tp]"', '<time>', DEF_ITEM_GROUP, DEF_ITEM_TAG, DEF_ITEM_CHANNEL);
 }
 
 // Insert a new item whose parts are defined by the passed arguments
-function insertItem(type: string, name: string, label: string, icon: string,
-	group: string, tag: string, channel: string): void {
-
+function insertItem(type: string, name: string, label: string, icon: string, group: string, tag: string, channel: string): void {
 	// Only execute if there's an active text editor
 	if (!vscode.window.activeTextEditor) {
 		return;
@@ -100,31 +104,89 @@ function insertItem(type: string, name: string, label: string, icon: string,
 	editor.selection = new vscode.Selection(newPos, newPos);
 	let range = new vscode.Range(newPos,newPos.with(newPos.line, 0));
 
-	insertFormattedItem(editor, range, type, name, label, icon, group, tag, channel, 0);
+	let formattedItem = formatItem(type, name, label, icon, group, tag, channel, 0);
 
+	let selection = range;
+	editor.edit(builder => {
+		builder.replace(selection, formattedItem);
+	});
 	editor.selection = new vscode.Selection(newPos, newPos);
 }
 
-// Format an existing item definition
-function commandFormatItem(): void {
+function commandReformatFile(): void {
 	// Only execute if there's an active text editor
 	if (!vscode.window.activeTextEditor) {
 		return;
 	}
 
 	let doc = vscode.window.activeTextEditor.document;
-	let ed = vscode.window.activeTextEditor;
-	let currentPos = ed.selection.active;
+	let editor = vscode.window.activeTextEditor;
+	let currentPos = editor.selection.active;
+	console.log("ReformatFile: File has " + doc.lineCount + " lines");
+
 	let newPos: vscode.Position;
+	editor.edit(builder => {
+		for (let index = 0; index < doc.lineCount; index++) {
+			newPos = currentPos.with(index, 0);
+			editor.selection = new vscode.Selection(newPos, newPos);
+			let reformattedItem = reformatItem();
+			if (reformattedItem !== "") {
+				let selection = new vscode.Range(newPos, newPos.with(newPos.line, doc.lineAt(newPos.line).text.length));
+				builder.replace(selection, reformattedItem);
+			}
+		}
+	}).then(success => {
+		let pos = new vscode.Position(0,0);
+		editor.selection = new vscode.Selection(pos, pos);
+	}).then(undefined, err => {
+		console.error(err);
+	});
+}
+
+// Format an existing item definition
+function commandReformatItem(): void {
+	// Only execute if there's an active text editor
+	if (!vscode.window.activeTextEditor) {
+		return;
+	}
+
+	let doc = vscode.window.activeTextEditor.document;
+	let editor = vscode.window.activeTextEditor;
+	let currentPos = editor.selection.active;
+	let newPos = currentPos.with(currentPos.line, 0);
+
+	editor.edit(builder => {
+		let reformattedItem = reformatItem();
+		if (reformattedItem !== "") {
+			let selection = new vscode.Range(newPos, newPos.with(newPos.line, doc.lineAt(currentPos.line).text.length));
+			builder.replace(selection, reformattedItem);
+		}
+	}).then(success => {
+		console.log("Success: " + success);
+	}).then(undefined, err => {
+		console.error(err);
+	});
+}
+
+function reformatItem(): string {
+	// Only execute if there's an active text editor
+	if (!vscode.window.activeTextEditor) {
+		return "";
+	}
+
+	let doc = vscode.window.activeTextEditor.document;
+	let editor = vscode.window.activeTextEditor;
+	let currentPos = editor.selection.active;
 
 	// Current line must have something in it
 	let lineText = doc.lineAt(currentPos.line);
 	if (lineText.text.length === 0 || lineText.isEmptyOrWhitespace) {
-		return;
+		return "";
 	}
 	// Ignore comments
-	if (lineText.text.startsWith('//')) {
-		return;
+	var comment = doc.getWordRangeAtPosition(currentPos.with(currentPos.line, 0), REGEX_COMMENT);
+	if (comment) {
+		return "";
 	}
 
 	// Default these to empty. They will be changed
@@ -141,9 +203,8 @@ function commandFormatItem(): void {
 	let preserveWhitespace = config.preserveWhitespace;
 
 	// Position at start of line and get a range for the entire line
-	newPos = currentPos.with(currentPos.line, 0);
-	ed.selection = new vscode.Selection(newPos, newPos);
-	let range = new vscode.Range(newPos, newPos.with(newPos.line, lineText.text.length));
+	let newPos = currentPos.with(currentPos.line, 0);
+	editor.selection = new vscode.Selection(newPos, newPos);
 
 	// Move to after the whitespace
 	let leadingWhitespaceCount = lineText.firstNonWhitespaceCharacterIndex;
@@ -170,7 +231,7 @@ function commandFormatItem(): void {
 	}
 	// Must have a type and name to continue
 	if (itemType.length === 0 || itemName.length === 0) {
-		return;
+		return "";
 	}
 	// Discover item Label
 	let itemLabelRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_LABEL);
@@ -209,38 +270,32 @@ function commandFormatItem(): void {
 		newPos = newPos.with(newPos.line, newPos.character + itemChannel.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 	}
-	// Replace the exiting item with a reformatted one
-	insertFormattedItem(ed, range, itemType, itemName, itemLabel, itemIcon, itemGroup, itemTag, itemChannel, leadingWhitespaceCount);
+	// Return the reformatted version of the item
+	return formatItem(itemType, itemName, itemLabel, itemIcon, itemGroup, itemTag, itemChannel, leadingWhitespaceCount);
 }
 
-function insertFormattedItem(ed: vscode.TextEditor, range: vscode.Range, type: string, name: string, label: string,
-	icon: string, group: string, tag: string, channel: string, additionalIndent : number): void {
+function formatItem(type: string, name: string, label: string,
+	icon: string, group: string, tag: string, channel: string, additionalIndent : number): string {
 
 	let config = vscode.workspace.getConfiguration('openhab-formatter');
 	let indentAmount = config.indentAmount;
-
-	// Create text for new line
-	let reformattedItem = indent(additionalIndent) + type + indent(indentAmount - type.length) + name + "\n";
+	let formattedItem = indent(additionalIndent) + type + indent(indentAmount - type.length) + name + "\n";
 	if(label.length !== 0) {
-		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + label + "\n";
+		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + label + "\n";
 	}
 	if(icon.length !== 0) {
-		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + icon + "\n";
+		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + icon + "\n";
 	}
 	if(group.length !== 0) {
-		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + group + "\n";
+		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + group + "\n";
 	}
 	if(tag.length !== 0) {
-		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + tag + "\n";
+		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + tag + "\n";
 	}
 	if(channel.length !== 0) {
-		reformattedItem = reformattedItem + indent(additionalIndent + indentAmount) + channel + "\n";
+		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + channel + "\n";
 	}
-
-	let selection = range;
-	ed.edit(builder => {
-		builder.replace(selection, reformattedItem);
-	});
+	return formattedItem;
 }
 
 // Count the amount of whitespace starting at startPos
