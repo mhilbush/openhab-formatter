@@ -51,13 +51,16 @@ None
 ### Workspace Settings
 
 When reformatting an item, you can set these parameters to specify
-* how much you want to indent the lines of the multiline item, and
-* whether you wnat to preserve any leading whitespace in the reformatted item.
 
+* how much you want to indent the lines of the multiline item, and
+* whether you want to preserve any leading whitespace in the reformatted item.
+
+```
 {
     "openhab-formatter.indentAmount": 28,
     "openhab-formatter.preserveWhitespace": false
 }
+```
 
 Default for indentAmount is 28
 
