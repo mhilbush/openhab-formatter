@@ -6,11 +6,15 @@ Two Main Features
 * Reformats an openHAB item definition from a single-line item definition to a multi-line item definition.
 * Inserts item *templates* for several common item types
 
-### Reformat Item
+### Reformat Items
 
 Reformat Item On Line Containing Cursor
 * "mac": "cmd+i cmd+f",
 * "win": "ctrl+i ctrl+f",
+
+Reformat All Items In File
+* "mac": "cmd+i cmd+l",
+* "win": "ctrl+i ctrl+l",
 
 ### Insert Items
 
@@ -59,9 +63,24 @@ Default for indentAmount is 28
 
 Default for preserveWhitespace is false
 
-## Known Issues
+## Example
 
-The **ReformatItem** command only reformats one line at a time. I haven't gotten around to making it work on a selection and/or the entire file.
+Converts lines like this.
+
+```
+Number:Temperature BedroomTemperature "Bedroom Temperature [%.0f %unit%]" <temperature> (gTemperature) ["Temperature"] { channel="some:binding:local:sensor-temperature" }
+```
+
+To lines like this.
+
+```
+Number:Temperature          BedroomTemperature
+                            "Bedroom Temperature [%.0f %unit%]"
+                            <temperature>
+                            (gTemperature)
+                            ["Temperature"]
+                            { channel="some:binding:local:sensor-temperature" }
+```
 
 ## Release Notes
 
