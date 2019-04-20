@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 const REGEX_COMMENT = /^\s*\/\/.*$/;
 
 // Regex patterns to match parts of item definition
-const REGEX_ITEM_TYPE = /(Color|Contact|DateTime|Dimmer|Group|Image|Location|Number|Player|Rollershutter|String|Switch):*(\w)*:*[\w\(\),]*/;
+const REGEX_ITEM_TYPE = /(Color|Contact|DateTime|Dimmer|Group|Image|Location|Number|Player|Rollershutter|String|Switch)(:\w+)?(:\w+\((\s*\w+)(,\s*\w+)*\s*\))?/;
 const REGEX_ITEM_NAME = /[a-zA-Z0-9][a-zA-Z0-9_]*/;
 const REGEX_ITEM_LABEL = /\".+?\"/;
 const REGEX_ITEM_ICON = /<.+?>/;
@@ -219,12 +219,14 @@ function reformatItem(): string {
 	var wordRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_TYPE);
 	if (wordRange && wordRange.isSingleLine) {
 		itemType = doc.getText(wordRange);
+		console.log("Matched type: " + itemType);
 		newPos = newPos.with(newPos.line, newPos.character + itemType.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 		// Discover item Name
 		var itemNameRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_NAME);
 		if (itemNameRange && itemNameRange.isSingleLine) {
 			itemName = doc.getText(itemNameRange);
+			console.log("Matched name: " + itemName);
 			newPos = newPos.with(newPos.line, newPos.character + itemName.length);
 			newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 		}
@@ -279,7 +281,13 @@ function formatItem(type: string, name: string, label: string,
 
 	let config = vscode.workspace.getConfiguration('openhab-formatter');
 	let indentAmount = config.indentAmount;
-	let formattedItem = indent(additionalIndent) + type + indent(indentAmount - type.length) + name + "\n";
+
+	let typeNameIndent = indent(indentAmount - type.length);
+	if (type.length > indentAmount) {
+		typeNameIndent = " ";
+	}
+
+	let formattedItem = indent(additionalIndent) + type + typeNameIndent + name + "\n";
 	if(label.length !== 0) {
 		formattedItem = formattedItem + indent(additionalIndent + indentAmount) + label + "\n";
 	}
