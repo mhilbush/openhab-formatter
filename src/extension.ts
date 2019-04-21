@@ -122,7 +122,6 @@ function commandReformatFile(): void {
 	let doc = vscode.window.activeTextEditor.document;
 	let editor = vscode.window.activeTextEditor;
 	let currentPos = editor.selection.active;
-	console.log("ReformatFile: File has " + doc.lineCount + " lines");
 
 	let newPos: vscode.Position;
 	editor.edit(builder => {
@@ -162,7 +161,6 @@ function commandReformatItem(): void {
 			builder.replace(selection, reformattedItem);
 		}
 	}).then(success => {
-		console.log("Success: " + success);
 	}).then(undefined, err => {
 		console.error(err);
 	});
@@ -219,14 +217,14 @@ function reformatItem(): string {
 	var wordRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_TYPE);
 	if (wordRange && wordRange.isSingleLine) {
 		itemType = doc.getText(wordRange);
-		console.log("Matched type: " + itemType);
+		// FIXME console.log("Matched type: " + itemType);
 		newPos = newPos.with(newPos.line, newPos.character + itemType.length);
 		newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 		// Discover item Name
 		var itemNameRange = doc.getWordRangeAtPosition(newPos, REGEX_ITEM_NAME);
 		if (itemNameRange && itemNameRange.isSingleLine) {
 			itemName = doc.getText(itemNameRange);
-			console.log("Matched name: " + itemName);
+			// FIXME console.log("Matched name: " + itemName);
 			newPos = newPos.with(newPos.line, newPos.character + itemName.length);
 			newPos = newPos.with(newPos.line, newPos.character + countWhitespace(doc, newPos));
 		}
@@ -282,9 +280,12 @@ function formatItem(type: string, name: string, label: string,
 	let config = vscode.workspace.getConfiguration('openhab-formatter');
 	let indentAmount = config.indentAmount;
 
-	let typeNameIndent = indent(indentAmount - type.length);
-	if (type.length > indentAmount) {
-		typeNameIndent = " ";
+	// If type is longer than the indent, make sure there's at least one space
+	let typeNameIndent : string;
+	if (type.length < indentAmount) {
+		typeNameIndent = indent(indentAmount - type.length);
+	} else {
+		typeNameIndent = indent(1);
 	}
 
 	let formattedItem = indent(additionalIndent) + type + typeNameIndent + name + "\n";

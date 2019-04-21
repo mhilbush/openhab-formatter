@@ -2,9 +2,8 @@
 	"name": "openhab-formatter",
 	"displayName": "openHAB Formatter",
 	"description": "Format openHAB assets",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"publisher": "MarkHilbush",
-    "icon": "openhab.png",
 	"engines": {
 		"vscode": "^1.30.0"
 	},
